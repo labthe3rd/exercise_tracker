@@ -16,7 +16,8 @@ var bodyParser = require("body-parser");
 const crypto = require("crypto");
 
 //We will be using the library luxon to handle the datetime because of javascripts timezone handling
-const { DateTime } = require("luxon");
+//Attempting to switch to default DATE to pass the test
+//const { DateTime } = require("luxon");
 
 // create application/json parser
 var jsonParser = bodyParser.json();
@@ -100,9 +101,16 @@ app.post(
     let duration = parseInt(req.body.duration, 10); // convert to number
     //we will split the date up to ensure the date doesn't convert
     let inputDateString = req.body.date;
-    let exercise_date = DateTime.fromISO(inputDateString, { zone: "utc" });
-    let storeDate = exercise_date.toISO();
-    let date = exercise_date.toFormat("EEE MMM dd yyyy");
+
+    //Attempting to switch to the default DATE for this project
+    // let exercise_date = DateTime.fromISO(inputDateString, { zone: "utc" });
+    // let storeDate = exercise_date.toISO();
+    // let date = exercise_date.toFormat("EEE MMM dd yyyy");
+
+    //Default date logic
+    let exercise_date = new Date(inputDateString);
+    let storeDate = exercise_date.toISOString();
+    let date = exercise_date.toDateString();
 
     //Add info to the database
     let exerciseEntry = {
