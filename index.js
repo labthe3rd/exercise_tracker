@@ -30,19 +30,14 @@ let userDatabase = {};
 //instantatiate user exercise database
 let exerciseDatabase = {};
 
-//Create a function that checks if the id exists in the userdatabase
+//Check if id exists
 function idExists(idToCheck) {
-  return Object.values(userDatabase).includes(idToCheck);
+  return userDatabase[idToCheck] !== undefined;
 }
 
-//Create a function that returns the username based on the id provided
+//Check if user exists
 function getUsernameById(id) {
-  for (let [username, userId] of Object.entries(userDatabase)) {
-    if (userId === id) {
-      return username;
-    }
-  }
-  return null; // or throw an error, depending on your preference
+  return userDatabase[id] ? userDatabase[id].username : null;
 }
 
 app.use(cors());
@@ -54,21 +49,35 @@ app.get("/", (req, res) => {
 //Use upload.single() with the form name 'upfile' to get a single file from a from
 app.post("/api/users", urlencodedParser, async function (req, res) {
   let username = req.body.username;
-  if (username in userDatabase) {
+
+  let existingUser = Object.values(userDatabase).find(
+    (user) => user.username === username
+  );
+
+  if (existingUser) {
     console.log("User already exists return their id");
     return res.json({
-      username: username,
-      _id: userDatabase[username],
+      username: existingUser.username,
+      _id: existingUser._id,
     });
   }
-  console.log("User does not exist, creating new id for usrer");
+
+  console.log("User does not exist, creating new id for user");
   let uid = crypto.randomUUID().replace(/-/g, "");
-  userDatabase[username] = uid;
+
+  userDatabase[uid] = {
+    username: username,
+    _id: uid,
+  };
 
   return res.json({
     username: username,
     _id: uid,
   });
+});
+
+app.get("/api/users", (req, res) => {
+  return res.json(Object.values(userDatabase));
 });
 
 //Upload exercise to a database
