@@ -140,10 +140,10 @@ app.get("/api/users/:_id/logs", (req, res) => {
   let logs = exerciseDatabase[id] || []; // All logs for the user
 
   logs = logs.map((log) => {
-    let logDate = new Date(log.date);
+    let logDate = DateTime.fromISO(log.date, { zone: "utc" });
     return {
       ...log,
-      date: logDate.toDateString(),
+      date: logDate.toFormat("EEE MMM dd yyyy"), // Display in GMT/UTC
     };
   });
 
