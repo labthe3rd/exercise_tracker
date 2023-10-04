@@ -32,17 +32,12 @@ let exerciseDatabase = {};
 
 //Create a function that checks if the id exists in the userdatabase
 function idExists(idToCheck) {
-  return Object.values(userDatabase).includes(idToCheck);
+  return userDatabase[idToCheck] !== undefined;
 }
 
 //Create a function that returns the username based on the id provided
 function getUsernameById(id) {
-  for (let [username, userId] of Object.entries(userDatabase)) {
-    if (userId === id) {
-      return username;
-    }
-  }
-  return null; // or throw an error, depending on your preference
+  return userDatabase[id] ? userDatabase[id].username : null;
 }
 
 app.use(cors());
@@ -55,16 +50,29 @@ app.get("/", (req, res) => {
 app.post("/api/users", urlencodedParser, async function (req, res) {
   let username = req.body.username;
 
-  if (username in userDatabase) {
+  //Check if it is an existing user in the database
+  let existingUser = Object.values(userDatabase).find(
+    (user) => user.username === username
+  );
+
+  //Return user data if it is an existing user
+  if (existingUser) {
     console.log("User already exists return their id");
     return res.json({
-      username: username,
-      _id: userDatabase[username],
+      username: existingUser.username,
+      _id: existingUser._id,
     });
   }
-  console.log("User does not exist, creating new id for usrer");
+
+  //New user
+  console.log("User does not exist, creating new id for user");
   let uid = crypto.randomUUID().replace(/-/g, "");
-  userDatabase[username] = uid;
+
+  //Add entry to userDatabase
+  userDatabase[uid] = {
+    username: username,
+    _id: uid,
+  };
 
   return res.json({
     username: username,
@@ -72,13 +80,9 @@ app.post("/api/users", urlencodedParser, async function (req, res) {
   });
 });
 
+//Return user list
 app.get("/api/users", (req, res) => {
-  //First create array for the return
-  let usersArray = Object.entries(userDatabase).map(([username, id]) => {
-    return { [username]: id };
-  });
-  //now return the array
-  return res.json(usersArray);
+  return res.json(Object.values(userDatabase));
 });
 
 //Upload exercise to a database
@@ -97,11 +101,15 @@ app.post(
     let username = getUsernameById(id);
     //Set description and duration direclty from body
     let description = req.body.description;
-    let duration = req.body.duration;
+    //Convert the duration to a number to meet the requirements of the test
+    let duration = parseInt(req.body.duration, 10); // convert to number
     //we will split the date up to ensure the date doesn't convert
     let inputDateString = req.body.date;
-    let exercise_date = DateTime.fromISO(inputDateString, { zone: "utc" });
-    let date = exercise_date.toFormat("EEE MMM dd yyyy");
+    let exercise_date = inputDateString
+      ? DateTime.fromISO(inputDateString, { zone: "utc" })
+      : DateTime.now().setZone;
+    //use the dateString format
+    let date = exercise_date.toFormat("EEE MMM dd yyyy"); // use dateString format
 
     //Add info to the database
     let exerciseEntry = {
@@ -119,9 +127,11 @@ app.post(
     return res.json({
       _id: id,
       username: username,
-      date: date,
-      duration: duration,
-      description: description,
+      exercise: {
+        date: date,
+        duration: duration,
+        description: description,
+      },
     });
   }
 );
@@ -138,6 +148,15 @@ app.get("/api/users/:_id/logs", (req, res) => {
 
   let logs = exerciseDatabase[id] || []; // All logs for the user
 
+  //Ensure logs data types are datestring and number
+  logs = logs.map((log) => {
+    log.date = DateTime.fromFormat(log.date, "EEE MMM dd yyyy", {
+      zone: "utc",
+    }).toISODate();
+    log.duration = parseInt(log.duration, 10); // ensure it's a number
+    return log;
+  });
+
   // Optional filters
   if (req.query.from || req.query.to) {
     let fromDate = req.query.from
@@ -148,9 +167,7 @@ app.get("/api/users/:_id/logs", (req, res) => {
       : null;
 
     logs = logs.filter((log) => {
-      let logDate = DateTime.fromFormat(log.date, "EEE MMM dd yyyy", {
-        zone: "utc",
-      });
+      let logDate = DateTime.fromISO(log.date, { zone: "utc" }); // directly using DateTime.fromISO()
       return (
         (!fromDate || logDate >= fromDate) && (!toDate || logDate <= toDate)
       );
