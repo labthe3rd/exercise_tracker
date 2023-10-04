@@ -116,11 +116,9 @@ app.post(
     exerciseDatabase[id].push(exerciseEntry);
 
     return res.json({
-      _id: id,
       username: username,
-      date: date,
-      duration: duration,
-      description: description,
+      _id: id,
+      exercise: exerciseEntry,
     });
   }
 );
