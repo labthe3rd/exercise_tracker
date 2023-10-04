@@ -54,7 +54,6 @@ app.get("/", (req, res) => {
 //Use upload.single() with the form name 'upfile' to get a single file from a from
 app.post("/api/users", urlencodedParser, async function (req, res) {
   let username = req.body.username;
-
   if (username in userDatabase) {
     console.log("User already exists return their id");
     return res.json({
@@ -70,15 +69,6 @@ app.post("/api/users", urlencodedParser, async function (req, res) {
     username: username,
     _id: uid,
   });
-});
-
-app.get("/api/users", (req, res) => {
-  //First create array for the return
-  let usersArray = Object.entries(userDatabase).map(([username, id]) => {
-    return { [username]: id };
-  });
-  //now return the array
-  return res.json(usersArray);
 });
 
 //Upload exercise to a database
