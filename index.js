@@ -16,8 +16,7 @@ var bodyParser = require("body-parser");
 const crypto = require("crypto");
 
 //We will be using the library luxon to handle the datetime because of javascripts timezone handling
-//Attempting to switch to default DATE to pass the test
-//const { DateTime } = require("luxon");
+const { DateTime } = require("luxon");
 
 // create application/json parser
 var jsonParser = bodyParser.json();
@@ -101,16 +100,9 @@ app.post(
     let duration = parseInt(req.body.duration, 10); // convert to number
     //we will split the date up to ensure the date doesn't convert
     let inputDateString = req.body.date;
-
-    //Attempting to switch to the default DATE for this project
-    // let exercise_date = DateTime.fromISO(inputDateString, { zone: "utc" });
-    // let storeDate = exercise_date.toISO();
-    // let date = exercise_date.toFormat("EEE MMM dd yyyy");
-
-    //Default date logic
-    let exercise_date = new Date(inputDateString);
-    let storeDate = exercise_date.toISOString();
-    let date = exercise_date.toDateString();
+    let exercise_date = DateTime.fromISO(inputDateString, { zone: "utc" });
+    let storeDate = exercise_date.toISO();
+    let date = exercise_date.toFormat("EEE MMM dd yyyy");
 
     //Add info to the database
     let exerciseEntry = {
@@ -139,11 +131,11 @@ app.post(
 app.get("/api/users/:_id/logs", (req, res) => {
   let id = req.params._id;
 
-  if (!idExists(id)) {
-    return res.json({
-      error: "User Does Not Exist",
-    });
-  }
+  // if (!idExists(id)) {
+  //   return res.json({
+  //     error: "User Does Not Exist",
+  //   });
+  // }
 
   let logs = exerciseDatabase[id] || []; // All logs for the user
 
@@ -157,17 +149,11 @@ app.get("/api/users/:_id/logs", (req, res) => {
 
   // Optional filters
   if (req.query.from || req.query.to) {
-    let fromDate = req.query.from
-      ? DateTime.fromISO(req.query.from, { zone: "utc" })
-      : null;
-    let toDate = req.query.to
-      ? DateTime.fromISO(req.query.to, { zone: "utc" })
-      : null;
+    let fromDate = req.query.from ? new Date(req.query.from) : null;
+    let toDate = req.query.to ? new Date(req.query.to) : null;
 
     logs = logs.filter((log) => {
-      let logDate = DateTime.fromFormat(log.date, "EEE MMM dd yyyy", {
-        zone: "utc",
-      });
+      let logDate = new Date(log.date);
       return (
         (!fromDate || logDate >= fromDate) && (!toDate || logDate <= toDate)
       );
