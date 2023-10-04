@@ -139,11 +139,11 @@ app.post(
 app.get("/api/users/:_id/logs", (req, res) => {
   let id = req.params._id;
 
-  // if (!idExists(id)) {
-  //   return res.json({
-  //     error: "User Does Not Exist",
-  //   });
-  // }
+  if (!idExists(id)) {
+    return res.json({
+      error: "User Does Not Exist",
+    });
+  }
 
   let logs = exerciseDatabase[id] || []; // All logs for the user
 
@@ -157,11 +157,17 @@ app.get("/api/users/:_id/logs", (req, res) => {
 
   // Optional filters
   if (req.query.from || req.query.to) {
-    let fromDate = req.query.from ? new Date(req.query.from) : null;
-    let toDate = req.query.to ? new Date(req.query.to) : null;
+    let fromDate = req.query.from
+      ? DateTime.fromISO(req.query.from, { zone: "utc" })
+      : null;
+    let toDate = req.query.to
+      ? DateTime.fromISO(req.query.to, { zone: "utc" })
+      : null;
 
     logs = logs.filter((log) => {
-      let logDate = new Date(log.date);
+      let logDate = DateTime.fromFormat(log.date, "EEE MMM dd yyyy", {
+        zone: "utc",
+      });
       return (
         (!fromDate || logDate >= fromDate) && (!toDate || logDate <= toDate)
       );
