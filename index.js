@@ -101,13 +101,14 @@ app.post(
     //we will split the date up to ensure the date doesn't convert
     let inputDateString = req.body.date;
     let exercise_date = DateTime.fromISO(inputDateString, { zone: "utc" });
+    let storeDate = exercise_date.toISO();
     let date = exercise_date.toFormat("EEE MMM dd yyyy");
 
     //Add info to the database
     let exerciseEntry = {
       description: description,
       duration: duration,
-      date: date,
+      date: storeDate,
     };
 
     // Append new exercise to the user's list of exercises
@@ -137,6 +138,14 @@ app.get("/api/users/:_id/logs", (req, res) => {
   }
 
   let logs = exerciseDatabase[id] || []; // All logs for the user
+
+  logs = logs.map((log) => {
+    let logDate = new Date(log.date);
+    return {
+      ...log,
+      date: logDate.toDateString(),
+    };
+  });
 
   // Optional filters
   if (req.query.from || req.query.to) {
