@@ -100,7 +100,15 @@ app.post(
     let duration = parseInt(req.body.duration, 10); // convert to number
     //we will split the date up to ensure the date doesn't convert
     let inputDateString = req.body.date;
-    let exercise_date = DateTime.fromISO(inputDateString, { zone: "utc" });
+
+    //We will check to see if we have a valid date/time entry, if not we will use the current date and time
+    let exercise_date;
+    if (!inputDateString || !DateTime.fromISO(inputDateString).isValid) {
+      exercise_date = DateTime.utc();
+    } else {
+      exercise_date = DateTime.fromISO(inputDateString, { zone: "utc" });
+    }
+
     let storeDate = exercise_date.toISO();
     let date = exercise_date.toFormat("EEE MMM dd yyyy");
 
