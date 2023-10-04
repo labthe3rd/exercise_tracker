@@ -96,7 +96,8 @@ app.post(
     let username = getUsernameById(id);
     //Set description and duration direclty from body
     let description = req.body.description;
-    let duration = req.body.duration;
+    //convert duration to a number
+    let duration = parseInt(req.body.duration, 10); // convert to number
     //we will split the date up to ensure the date doesn't convert
     let inputDateString = req.body.date;
     let exercise_date = DateTime.fromISO(inputDateString, { zone: "utc" });
@@ -104,9 +105,9 @@ app.post(
 
     //Add info to the database
     let exerciseEntry = {
-      date: date,
-      duration: duration,
       description: description,
+      duration: duration,
+      date: date,
     };
 
     // Append new exercise to the user's list of exercises
@@ -116,9 +117,11 @@ app.post(
     exerciseDatabase[id].push(exerciseEntry);
 
     return res.json({
-      username: username,
       _id: id,
-      exercise: exerciseEntry,
+      username: username,
+      date: date,
+      duration: duration,
+      description: description,
     });
   }
 );
